@@ -22,14 +22,24 @@ do
 	do
 		test -d "$TMP_DIR/$pkg/$arch" || continue;
 		cd "$TMP_DIR/$pkg/$arch";
-		echo ".. Starting $arch"
+		echo ".. Starting $arch";
 
-		test -d "$BASE_DIR/$arch/" || mkdir -p "$BASE_DIR/$arch/"
+		test -d "$BASE_DIR/$arch/" || mkdir -p "$BASE_DIR/$arch/";
 
-		echo ".... Copying rpms for $pkg ($arch)"
-		find "$TMP_DIR/$pkg/$arch/" -type f -iname *.rpm -exec cp {} $BASE_DIR/$arch/ \;
+		echo ".... Copying rpms for $pkg ($arch)";
+		cd "$TMP_DIR/$pkg/$arch";
+		cp -v *.rpm "$BASE_DIR/$arch/";
 	
 		echo ""
 	done
 done
 rm -rf $TMP_DIR
+cd "$BASE_DIR"
+
+for arch in *;
+do
+	test -d "$BASE_DIR/$arch" || continue;
+	cd "$BASE_DIR/$arch";
+	createrepo "$BASE_DIR/$arch";
+done
+chown -R www-server:www-data "$BASE_DIR";
