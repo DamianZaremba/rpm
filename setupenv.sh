@@ -63,7 +63,7 @@ function setup_centos {
 			find "$BASE_DIR/rpm-centos/$pkg/" -type f -iname *.spec -exec cp {} $BASE_DIR/rpmbuild/SPECS/ \;
 
 			echo ".... Copying srpms for $pkg"
-			find "$BASE_DIR/rpm-centos/$pkg/" -type f -iname *.srpm -exec cp {} $BASE_DIR/rpmbuild/SRPMS/ \;
+			find "$BASE_DIR/rpm-centos/$pkg/" -type f -iname *.src.rpm -exec cp {} $BASE_DIR/rpmbuild/SRPMS/ \;
 
 			echo ".... Copying sources for $pkg"
 			find "$BASE_DIR/rpm-centos/$pkg/" -type f ! -iname *.spec ! -iname *.srpm ! -iname *.rpm -exec cp {} $BASE_DIR/rpmbuild/SOURCES/ \;

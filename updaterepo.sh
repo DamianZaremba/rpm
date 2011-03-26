@@ -28,7 +28,7 @@ do
 
 		echo ".... Copying rpms for $pkg ($arch)";
 		cd "$TMP_DIR/$pkg/$arch";
-		cp -v *.rpm "$BASE_DIR/$arch/";
+		rsync -vr --delete *.rpm "$BASE_DIR/$arch/";
 	
 		echo ""
 	done
