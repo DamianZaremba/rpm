@@ -1,0 +1,46 @@
+#!/bin/sh
+
+# Paul Wouters <paul@xelerance.com>
+# This folds back zone updates, dynamic updates, etc that nsd records
+# in the ixfr.db and nsd.db files back into the zone files or vice-versa
+
+# Default settings - do not edit these but /etc/sysconfig/nsd instead!
+NSD_CONF="/etc/nsd/nsd.conf"
+NSDC_PROG="/usr/sbin/nsdc"
+NSD_CHECKCONF_PROG="/usr/sbin/nsd-checkconf"
+NSD_AUTOREBUILD="yes"
+
+# Read in local settings.
+[ -r /etc/sysconfig/nsd ] && . /etc/sysconfig/nsd
+
+# Ideally check if ixfr.db newer then any zones, only then do
+$NSDC_PROG -c $NSD_CONF patch > /dev/null 2>&1
+
+# We try to only rebuild/reload when neccessary. If 1 zone is newer,
+# we need to rebuild the db file.
+# This might give problems with huge zones, eg TLD's, which cannot
+# complete this operation within an hour, but it should work fine for
+# most other uses.
+
+case "$NSD_AUTOREBUILD" in
+	[Yy]|[Yy][Ee][Ss])
+		database="`$NSD_CHECKCONF_PROG -o database $NSD_CONF`"
+		$NSD_CHECKCONF_PROG -v $NSD_CONF | grep zonefile: | sed "s/^.*\"\(.*\)\"/\1/" | while read zonefile
+		do
+			if [ $zonefile -nt $database ]
+			then
+				echo "Zone $zonefile update requires database rebuild"
+				$NSDC_PROG rebuild > /dev/null 2>&1
+				$NSDC_PROG reload > /dev/null 2>&1
+				break
+			fi
+		done
+		;;
+	*)
+		;;	
+esac
+
+# nsd checks the serial in notify requests, so its better to send an
+# occasional redundant notify, then to miss it.
+# According to the nsd team, this is no longer neccessary
+# $NSDC_PROG notify > /dev/null 2>&1

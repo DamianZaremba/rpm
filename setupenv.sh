@@ -28,7 +28,7 @@ function initial_check {
 function setup_rpm_stuff {
 	echo "Setting up rpm env"
 	cat > "$BASE_DIR/.rpmmacros" <<EOF
-%_topdir $BASE_DIR
+%_topdir $BASE_DIR/rpmbuild
 %packager Damian Zaremba <damian@damianzaremba.co.uk>
 EOF
 
@@ -59,28 +59,16 @@ function setup_centos {
 		test -d "$BASE_DIR/rpm-centos/$pkg" || continue;
 		cd "$BASE_DIR/rpm-centos/$pkg";
 		echo "Starting $pkg"
+			echo ".... Copying specs for $pkg"
+			find "$BASE_DIR/rpm-centos/$pkg/" -type f -iname *.spec -exec cp {} $BASE_DIR/rpmbuild/SPECS/ \;
 
-		for arch in *;
-		do
-			test -d "$BASE_DIR/rpm-centos/$pkg/$arch" || continue;
-			test -d "$BASE_DIR/rpmbuild/RPMS/$arch/" || mkdir "$BASE_DIR/rpmbuild/RPMS/$arch/";
-			cd "$BASE_DIR/rpm-centos/$pkg/$arch"
-			echo ".. Processing $arch"
+			echo ".... Copying srpms for $pkg"
+			find "$BASE_DIR/rpm-centos/$pkg/" -type f -iname *.srpm -exec cp {} $BASE_DIR/rpmbuild/SRPMS/ \;
 
-			echo ".... Copying specs for $pkg ($arch)"
-			find "$BASE_DIR/rpm-centos/$pkg/$arch" -type f -iname *.spec -exec cp {} $BASE_DIR/rpmbuild/SPECS/ \;
-
-			echo ".... Copying rpms for $pkg ($arch)"
-			find "$BASE_DIR/rpm-centos/$pkg/$arch" -type f -iname *.rpm -exec cp {} $BASE_DIR/rpmbuild/RPMS/$arch/ \;
-
-			echo ".... Copying srpms for $pkg ($arch)"
-			find "$BASE_DIR/rpm-centos/$pkg/$arch" -type f -iname *.srpm -exec cp {} $BASE_DIR/rpmbuild/SRPMS/ \;
-
-			echo ".... Copying sources for $pkg ($arch)"
-			find "$BASE_DIR/rpm-centos/$pkg/$arch" -type f ! -iname *.spec ! -iname *.srpm ! -iname *.rpm -exec cp {} $BASE_DIR/rpmbuild/SOURCES/ \;
+			echo ".... Copying sources for $pkg"
+			find "$BASE_DIR/rpm-centos/$pkg/" -type f ! -iname *.spec ! -iname *.srpm ! -iname *.rpm -exec cp {} $BASE_DIR/rpmbuild/SOURCES/ \;
 
 			echo ""
-		done
 	done
 }
 
