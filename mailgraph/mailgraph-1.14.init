@@ -1,0 +1,95 @@
+#!/bin/bash
+#
+# Startup script for the mailgraph service
+#
+# chkconfig: - 82 28
+# description: mailgraph mail log file analyzer
+# processname: mailgraph
+# pidfile: /var/run/mailgraph.pid
+# config: 
+### BEGIN INIT INFO
+# Provides:          mailgraph
+# Required-Start:    $local_fs
+# Should-Start:
+# Required-Stop:
+# Default-Stop:      0 1 2 6
+# Short-Description: Start mailgraph daemon
+# Description:       Mailgraph is a very simple mail statistics RRDtool     \
+#                    frontend for Postfix and Sendmail that produces daily, \
+#                    weekly, monthly and yearly graphs of received/sent and \
+#                    bounced/rejected mail.
+### END INIT INFO
+
+MAILLOG=/var/log/maillog
+PRIORITY=-19
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+if [ -f /etc/sysconfig/mailgraph ]; then
+        . /etc/sysconfig/mailgraph
+fi
+
+# Path to the mailgraph script.
+exe=/usr/sbin/mailgraph
+prog=mailgraph
+RETVAL=0
+
+start() {
+    echo -n $"Starting $prog: "
+    daemon nice $PRIORITY $exe -l $MAILLOG -d \
+        --daemon-pid=/var/run/mailgraph.pid   \
+        --daemon-rrd=/var/lib/mailgraph $OPTIONS
+
+    RETVAL=$?
+    echo
+    [ $RETVAL -eq 0 ] && touch /var/lock/subsys/$prog
+    return $RETVAL
+}
+stop() {
+    echo -n $"Stopping $prog: "
+    killproc $exe
+    RETVAL=$?
+    echo
+    [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/$prog /var/run/$prog.pid
+}
+reload() {
+    echo -n $"Reloading $prog: "
+    killproc $exe -HUP
+    RETVAL=$?
+    echo
+}
+
+# See how we were called.
+case "$1" in
+  start)
+    start
+    ;;
+  stop)
+    stop
+    ;;
+  status)
+    status $exe
+    RETVAL=$?
+    ;;
+  restart)
+    stop
+    start
+    RETVAL=$?
+    ;;
+  condrestart)
+    if [ -f /var/run/$prog.pid ] ; then
+        stop
+        start
+        RETVAL=$?
+    fi
+    ;;
+  reload)
+    reload
+	;;
+  *)
+    echo $"Usage: $prog {start|stop|restart|condrestart|reload|status}"
+    RETVAL=3
+esac
+
+exit $RETVAL
