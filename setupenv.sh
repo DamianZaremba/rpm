@@ -6,7 +6,7 @@
 # Expects a clean env and pulls down data from github.      #
 #############################################################
 
-BASE_REPO="https://github.com/DamianZaremba/rpm.git";
+BASE_REPO="git@github.com:DamianZaremba/rpm.git";
 INSTALL_DIR="/home/rpmbuilder"
 
 function initial_check {
@@ -50,7 +50,7 @@ function setup {
 		exit 1;
 	else
 		cd $BASE_DIR
-		git clone $BASE_REPO -b $type
+		git clone $BASE_REPO -b $type "$INSTALL_DIR/rpmbuild"
 		cd "$INSTALL_DIR/rpmbuild"
 	fi
 }
@@ -73,7 +73,7 @@ then
 	echo "#     This will over write stuff                 #"
 	echo "##################################################"
 
-else if [ "$1" == "--setup" && "$2" -ne "" ];
+else if [ "$1" == "--setup" ] && [ "$2" != "" ];
 then
 	initial_check
 
