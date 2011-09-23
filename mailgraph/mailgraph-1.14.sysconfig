@@ -1,3 +1,0 @@
-MAILLOG=/var/log/maillog
-PRIORITY=-19
-OPTIONS=--ignore-localhost

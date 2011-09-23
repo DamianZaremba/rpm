@@ -6,11 +6,11 @@
 # Expects a clean env and pulls down data from github.      #
 #############################################################
 
-CENTOS_REPO="https://github.com/DamianZaremba/rpm-centos.git";
-BASE_DIR="/home/rpmbuild"
+BASE_REPO="https://github.com/DamianZaremba/rpm.git";
+INSTALL_DIR="/home/rpmbuilder"
 
 function initial_check {
-	cd $BASE_DIR
+	cd $INSTALL_DIR
 	echo "--> We are going to install into $(pwd)"
 
 	echo "Is this ok? [y/n]"
@@ -27,49 +27,32 @@ function initial_check {
 
 function setup_rpm_stuff {
 	echo "Setting up rpm env"
-	cat > "$BASE_DIR/.rpmmacros" <<EOF
-%_topdir $BASE_DIR/rpmbuild
+	cat > "$INSTALL_DIR/.rpmmacros" <<EOF
+%_topdir $INSTALL_DIR/rpmbuild
 %packager Damian Zaremba <damian@damianzaremba.co.uk>
 EOF
 
-	test -d "$BASE_DIR/rpmbuild" || mkdir "$BASE_DIR/rpmbuild/"
-	test -d "$BASE_DIR/rpmbuild/BUILD" || mkdir "$BASE_DIR/rpmbuild/BUILD/"
-	test -d "$BASE_DIR/rpmbuild/RPMS" || mkdir "$BASE_DIR/rpmbuild/RPMS/"
-	test -d "$BASE_DIR/rpmbuild/SOURCES" || mkdir "$BASE_DIR/rpmbuild/SOURCES/"
-	test -d "$BASE_DIR/rpmbuild/SPECS" || mkdir "$BASE_DIR/rpmbuild/SPECS/"
-	test -d "$BASE_DIR/rpmbuild/SRPMS" || mkdir "$BASE_DIR/rpmbuild/SRPMS/"
+	echo "Setting up git stuff"
+	cat > "$INSTALL_DIR/.gitconfig" <<EOF
+[user]
+	email = damian@damianzaremba.co.uk
+	name = Damian Zaremba
+EOF
 }
 
-function setup_centos {
+function setup {
+	type=$1
 	setup_rpm_stuff
 
-	if [ -d "$BASE_DIR/rpm-centos" ];
+	if [ -d "$BASE_DIR/rpmbuild" ];
 	then
-		cd "$BASE_DIR/rpm-centos"
-		git pull
+		echo "We are already setup - bailing!";
+		exit 1;
 	else
 		cd $BASE_DIR
-		git clone $CENTOS_REPO
-		cd "$BASE_DIR/rpm-centos"
+		git clone $BASE_REPO -b $type
+		cd "$INSTALL_DIR/rpmbuild"
 	fi
-
-	cd "$BASE_DIR/rpm-centos"
-	for pkg in *;
-	do
-		test -d "$BASE_DIR/rpm-centos/$pkg" || continue;
-		cd "$BASE_DIR/rpm-centos/$pkg";
-		echo "Starting $pkg"
-			echo ".... Copying specs for $pkg"
-			find "$BASE_DIR/rpm-centos/$pkg/" -type f -iname *.spec -exec cp {} $BASE_DIR/rpmbuild/SPECS/ \;
-
-			echo ".... Copying srpms for $pkg"
-			find "$BASE_DIR/rpm-centos/$pkg/" -type f -iname *.src.rpm -exec cp {} $BASE_DIR/rpmbuild/SRPMS/ \;
-
-			echo ".... Copying sources for $pkg"
-			find "$BASE_DIR/rpm-centos/$pkg/" -type f ! -iname *.spec ! -iname *.srpm ! -iname *.rpm -exec cp {} $BASE_DIR/rpmbuild/SOURCES/ \;
-
-			echo ""
-	done
 }
 
 if [ -z "$1" ] || [ "$1" == "--help" ];
@@ -82,21 +65,21 @@ then
 	echo "# --help                                         #"
 	echo "#     Prints out this message                    #"
 	echo "#                                                #"
-	echo "# --setup-centos                                 #"
-	echo "#     Sets up a centos build env                 #"
+	echo "# --setup <type>                                 #"
+	echo "#     Sets up a <type> build env                 #"
 	echo "#                                                #"
 	echo "# ---------------------------------------------- #"
 	echo "# WARNING                                        #"
 	echo "#     This will over write stuff                 #"
 	echo "##################################################"
 
-else if [ "$1" == "--setup-centos" ];
+else if [ "$1" == "--setup" && "$2" -ne "" ];
 then
 	initial_check
 
 	echo "Starting setup";	
-	setup_centos
-
+	setup $2
+	exit 0;
 else
 	echo "I have no idea what you want me to do";
 	exit 1;
